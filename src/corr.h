@@ -5,6 +5,7 @@
 #include <cmath>
 #include "ap_int.h"
 #include "ap_fixed.h"
+#include "hls_math.h"
 
 // For testing
 #define NTEST 10
@@ -151,6 +152,11 @@ void init_inv_table(pt_T table_out[INV_TAB_SIZE]) {
     return;
 }
 
+
+
+
+// Lookup tables for sum jet
+
 // sets number of values in atan lookup table.
 //   covers 0,pi/4, so naturally use 2^(PHI_SIZE)/8
 #define ATAN_SIZE (PHI_SIZE-3)
@@ -226,32 +232,5 @@ template<class pxy_T, class phi_T>
 // a/b = a*(2^16/b) >> 16
 
 
-// LOOKUP TABLE for Jet Energy Resolution
-// mean = sum(x)/N
-// std = sqrt(1/N * sum(pow(x-x_mean, 2)))
-// std/x
-// uncertainty on pT = pT * (0.106 ×pT + 6.6)
-// pT(org) -> pT(org) + K*std(Jet pT)
-
-//template<class pt_T, class phi_T>
-//void jet_table(pt_T pt, phi_T eta, pt_T uncpt){
-//	if ( abs(eta) < 1.3) uncpt = pt * (0.106*pt + 6.6)
-//
-//
-//}
-//
-//template<class pt_T>
-//void init_projz_table(pt_T table_out[PROJ_TAB_SIZE]) {
-//    // Return table of cos(phi) where phi is in (0,pi/2)
-//    // multiply result by 2^(PT_SIZE) (equal to 1 in our units)
-//    for (int i = 0; i < PROJ_TAB_SIZE; i++) {
-//        //store result, guarding overflow near costheta=1
-//        pt2_t x = round((1<<PT_SIZE) * asinh(float(i)/PROJ_TAB_SIZE * M_PI/2));
-//        // (using extra precision here (pt2_t, not pt_t) to check the out of bounds condition)
-//        if(x >= (1<<PT_SIZE)) table_out[i] = (1<<PT_SIZE)-1;
-//        else table_out[i] = x;
-//    }
-//    return;
-//}
 
 #endif

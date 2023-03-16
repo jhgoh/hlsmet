@@ -6,6 +6,7 @@ HLS implementation of MET calculation from PF objects
 #include <cassert>
 #ifndef __SYNTHESIS__
 #include <cstdio>
+#include "hls_math.h"
 #endif
 
 // pt, phi are integers
@@ -42,6 +43,7 @@ void corr_hw(pt_t data_pt[NPART], phi_t data_phi[NPART], phi_t data_eta[NPART], 
         ProjY(data_pt_int[i], data_phi_int[i], met_y[i]);
     }
 
+
     pxy_t sum_x = 0;
     pxy_t sum_y = 0;
     SUM: for(int i=0; i<NPART;i++){
@@ -57,27 +59,41 @@ void corr_hw(pt_t data_pt[NPART], phi_t data_phi[NPART], phi_t data_eta[NPART], 
              std::cout << " \n";
          }
     }
+	
+	pxy_t mean_x = -sum_x / NPART;
+	pxy_t mean_y = -sum_y / NPART;
+
+	pt2_t dev_x = 0;
+	pt2_t dev_y = 0;
+	for(int i=0; i<NPART; i++){
+		dev_x += ( (met_x[i] - mean_x) * (met_x[i] - mean_x));
+		dev_y += ( (met_y[i] - mean_y) * (met_y[i] - mean_y));
+	}
+
+	pt2_t sigma2_x = dev_x / (NPART-1);
+	pt2_t sigma2_y = dev_y / (NPART-1);
+
+	pt_t sigma_x = hls::sqrt(sigma2_x); 
+	pt_t sigma_y = hls::sqrt(sigma2_y);
 
     res_pt2 = sum_x*sum_x + sum_y*sum_y;
+
+	pt_t res_pt = hls::sqrt(res_pt2);
+
+	pt_t K_value = 1.;
+	pt2_t corr_x;
+	pt2_t corr_y;
+
+	corr_x = sum_x + (K_value * sigma_x);
+	corr_y = sum_y + (K_value * sigma_y);
+
+	corr_pt = corr_x*corr_x + corr_y*corr_y; 
     //PhiFromXY(sum_x,sum_y,res_phi);
     res_phi=0;
 
-	phi_t eta1 = 1.3*(1<<PHI_SIZE);
-	float p1 = 0.106*(1<<PT2_SIZE)*(1<<PT_DEC_BITS);
-	float p2 = 6.6*(1<<PT2_SIZE)*(1<<PT_DEC_BITS);
-	std::cout << "p " << eta1 << "\t" << p1 << "\t" << p2 << "\n";
-	pt_t para1 = int(p1);
-	pt_t para2 = int(p2);
-	std::cout << "para " << eta1 << "\t" << para1 << "\t" << para2 << "\n";
 	for(int i=0; i<NPART;i++){
-		if (data_eta_int[i]<eta1){
-			std::cout << para1*data_pt_int[i] << "\t";
-			std::cout << (para1*data_pt_int[i])+para2 << "\t";
-			std::cout << data_pt_int[i]*((para1*data_pt_int[i])+para2) << "\n";
-			corr_pt[i] = data_pt_int[i]*((para1*data_pt_int[i])+para2);
-			std::cout << "data_pt_int = " << data_pt_int[i] << "\t";
-			std::cout << " corr_pt = " << corr_pt[i] << "\n";
-		}
+		std::cout << "data_pt_int = " << data_pt_int[i] << "\t";
+		std::cout << " corr_pt = " << corr_pt << "\n";
 	}
 	//if data_eta_int
 
