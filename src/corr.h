@@ -8,9 +8,9 @@
 #include "hls_math.h"
 
 // For testing
-#define NTEST 200
+#define NTEST 2
 #define NPART 128
-#define DEBUG 0
+#define DEBUG 1
 
 //
 // Input / Output types
@@ -33,8 +33,8 @@ typedef ap_int<PHI_SIZE> phi_t;
 
 
 // top algs
-void corr_ref(float in_pt[NPART], float in_phi[NPART], float in_eta[NPART], float in_jet_pt[NPART], float in_jet_phi[NPART], float& out_pt, float& out_phi, float& out_corr);
-void corr_hw(pt_t data_pt[NPART], phi_t data_phi[NPART], phi_t data_eta[NPART], pt_t jet_pt[NPART], phi_t jet_phi[NPART], pt2_t& res_pt2, phi_t& res_phi, pt2_t& corr_pt2);
+void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_phi[NPART], float in_jet_eta[NPART], float out_corr);
+void corr_hw(pt_t data_pt, phi_t data_phi, pt_t jet_pt[NPART], phi_t jet_phi[NPART], phi_t jet_eta[NPART], pt2_t& corr_pt2);
 
 
 //
