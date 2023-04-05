@@ -22,7 +22,8 @@ int alg_test() {
 	pt2_t out_corr_hw;
     
 	float in_pt, in_phi, in_jet_eta[NPART], in_jet_pt[NPART], in_jet_phi[NPART];
-    float out_pt, out_phi, out_corr_ref;
+    float out_pt, out_phi; 
+	double out_corr_ref;
 
     pt_t in_J_pt_hw[NPART];
 	phi_t in_J_phi_hw[NPART];
@@ -87,7 +88,7 @@ int alg_test() {
 
 		for(int j=0; j<NPART; j++){
 			// convert Jet float to hw units
-            in_J_eta_hw[j] = int(etavals[i][j] * (1<<PHI_SIZE));
+            in_J_eta_hw[j] = int(etavals[i][j] * (1<<PHI_SIZE)/6);
             in_J_pt_hw[j]  = Jetvals[i][j].first * (1<<PT_DEC_BITS); // 0.25 GeV precision
             in_J_phi_hw[j] = int(Jetvals[i][j].second * (1<<PHI_SIZE)/(2*M_PI));
 
@@ -95,7 +96,7 @@ int alg_test() {
             in_jet_pt[j]  = Jetvals[i][j].first;
             in_jet_phi[j] = Jetvals[i][j].second;
             in_jet_eta[j] = etavals[i][j];
-            if(i%100 == 0){
+            if(DEBUG && i%100 == 0){
                 std::cout << " \t part pt " << in_pt;
                 std::cout << "\t phi " << in_phi;
                 std::cout << "\t eta " << in_jet_eta[j]<<"\n";
@@ -106,7 +107,7 @@ int alg_test() {
         }
 
         out_pt=0.; out_phi=0.; out_pt2_hw=0.; out_phi_hw=0.; // Not use
-		out_corr_hw=0.; out_corr_ref=0.;
+		//out_corr_hw=0.; out_corr_ref=0.;
         
         // run reference alg
         corr_ref(in_pt, in_phi, in_jet_pt, in_jet_phi, in_jet_eta, out_corr_ref);
@@ -115,21 +116,21 @@ int alg_test() {
         corr_hw(in_pt_hw, in_phi_hw, in_J_pt_hw, in_J_phi_hw, in_J_eta_hw, out_corr_hw);
 
 
-        if(DEBUG) std::cout << " REF : in METpt = " << in_pt << ", METphi = "<< in_phi << " corrMET = " << out_corr_ref<<"\n";
+        std::cout << " REF : in METpt = " << in_pt << ", METphi = "<< in_phi << " corrMET = " << out_corr_ref<<"\n";
         // for HW alg, convert back to nice units for printingM
         int out_phi_hw_int = float(out_phi_hw);
         float out_phi_hw_rad = float(out_phi_hw) * (2*M_PI)/(1<<PHI_SIZE);
         float out_pt_hw = sqrt(float(out_pt2_hw)) / (1<<PT_DEC_BITS); // 0.25GeV to GeV  // Not use
-		float out_co_hw = sqrt(float(out_corr_hw)) / (1<<PT_DEC_BITS);
+		float out_co_hw = sqrt(float(out_corr_hw)) / (1<<PT_DEC_BITS); // Corrected MET // 0.25GeV to GeV
         std::cout << "  HW  : in METpt = " << float(in_pt_hw)/(1<<PT_DEC_BITS) << ", METphi = "<< in_phi_hw*(2*M_PI)/(1<<PHI_SIZE) << ", corrMET = "<< out_co_hw<< "\n";
 
         //if not debugging the full event details, print a compact output (in nice units)
-        if(true && !DEBUG && i%50 == 0){
+        if(DEBUG && i%50 == 0){
             std::cout << "Event " << i << "\n";
 			std::cout << " corrMET (REF vs HW) " << out_corr_ref << " vs " << out_co_hw <<"\n";
 		}
-        fprintf(f, "%f %f %f %f \n", out_pt, out_phi, out_pt_hw, out_phi_hw_rad);
-        fprintf(f2, "%f %f %f %f \n", out_corr_ref, out_phi, out_co_hw, out_phi_hw_rad);
+        fprintf(f, "%f %f %f %f \n", out_corr_ref, out_phi, out_co_hw, out_phi_hw_rad);
+        fprintf(f2, "%f %f %f %f \n", float(in_pt_hw)/(1<<PT_DEC_BITS), out_phi, out_co_hw, out_phi_hw_rad);
         //fprintf(f, "%f %f %f %d \n", out_pt, out_phi, out_pt_hw, out_phi_hw_int);
     }
     fclose(f);

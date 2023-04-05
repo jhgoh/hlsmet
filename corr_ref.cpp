@@ -5,42 +5,53 @@
 #include "ap_fixed.h"
 #include "src/corr.h"
 
-void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_phi[NPART], float in_jet_eta[NPART], float out_corr){
+void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_phi[NPART], float in_jet_eta[NPART], double& out_corr){
     if(DEBUG) std::cout << " REF Begin" << std::endl;
-    double met_x=0.;
-    double met_y=0.;
-    double jet_x[NPART];
-    double jet_y[NPART];
-	double sumJ_x=0.;
-	double sumJ_y=0.;
-	met_x -= in_pt * cos(in_phi);
-	met_y -= in_pt * sin(in_phi);
+    
+	// MET project
+	float met_x;
+    float met_y;
+	met_x = in_pt * cos(in_phi);
+	met_y = in_pt * sin(in_phi);
     if(DEBUG) std::cout << "     metx = " << met_x << " \t ";
     if(DEBUG) std::cout << "mety = " << met_y << " \n";
+
+	// Jet project
+    float jet_x[NPART];
+    float jet_y[NPART];
     for(int i=0;i<NPART;i++){
         jet_x[i] = in_jet_pt[i] * cos(in_jet_phi[i]);
         jet_y[i] = in_jet_pt[i] * sin(in_jet_phi[i]);
         if(DEBUG) std::cout << "     jetx = " << jet_x[i] << " \t ";
         if(DEBUG) std::cout << "jety = " << jet_y[i] << " \n";
     }
+
+	// Sum Jet x, y
+	double sumJ_x=0.;
+	double sumJ_y=0.;
+	
 	for(int i=0; i<NPART;i++){
-		std::cout << "jet eta = " << in_jet_eta[i] << "\n";
-		if ( in_jet_eta[i] < 1.3 && in_jet_eta[i] > -1.3 ){
+		if(DEBUG) std::cout << "r eta "<< in_jet_eta[i] << "\n";
+		if ( in_jet_eta[i] < 1.3 && in_jet_eta[i] > 0 ){
 			sumJ_x += 0.106*jet_x[i]+6.6;
 			sumJ_y += 0.106*jet_y[i]+6.6;
+			//std::cout << "r eta < 1.3" << "\n";
 		}
 		if ( (in_jet_eta[i] > 1.3 && in_jet_eta[i] < 1.7) 
 //				|| (in_jet_eta[i] < -1.3 && in_jet_eta[i] > -1.7) 
 				){
 			sumJ_x += 0.216*jet_x[i]+5.5;
 			sumJ_y += 0.216*jet_y[i]+5.5;
+			//std::cout << "r 1.3 < eta < 1.7" << "\n";
 		}
 		if ( (in_jet_eta[i] > 2.5 && in_jet_eta[i] < 3.) 
 //				|| (in_jet_eta[i] < -2.5 && in_jet_eta[i] > -3.) 
 				){
 			sumJ_x += 0.083*jet_x[i]+13.2;
 			sumJ_y += 0.083*jet_y[i]+13.2;
+			//std::cout << "r 2.5 < eta < 3.0" << "\n";
 		}
+		if(DEBUG) std::cout <<"\n";
 	}
 
 
@@ -49,9 +60,11 @@ void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_ph
 	double corr_x = met_x + (K_val * sumJ_x);
 	double corr_y = met_y + (K_val * sumJ_y);
 
-	std::cout << "corr_x, y = " << corr_x << ", " << corr_y <<"\n";
+	if(DEBUG) std::cout << "corr_x, y = " << corr_x << ", " << corr_y <<"\n";
 
-	out_corr = sqrt(corr_x*corr_x + corr_y*corr_y);
+	//out_corr = sqrt(corr_x*corr_x + corr_y*corr_y);
+	double out_corr2 = pow(corr_x, 2) + pow(corr_y,2);
+	out_corr = sqrt(out_corr2);
 
 	std::cout << "	out_corr = " << out_corr << "\n";
 	//float out_phi
