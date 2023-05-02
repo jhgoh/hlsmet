@@ -78,9 +78,10 @@ int alg_test() {
 
     for (int i=0; i<NTEST; ++i) {
         if(DEBUG) std::cout << "\n\n\n\nEvent " << i << std::endl;
+
         // convert float to hw units
-        in_pt_hw  = vals[i][0].first * (1<<PT_DEC_BITS); // 0.25 GeV precision
-        in_phi_hw = int(vals[i][0].second * (1<<PHI_SIZE)/(2*M_PI));
+        in_pt_hw  = vals[i][0].first * (1<<PT_DEC_BITS); // 0.25 GeV precision {2bits shifted}
+        in_phi_hw = int(vals[i][0].second * (1<<PHI_SIZE)/(2*M_PI)); // {10bits shifted}
         
         // keep test vals as float
         in_pt  = vals[i][0].first;
@@ -88,9 +89,9 @@ int alg_test() {
 
 		for(int j=0; j<NPART; j++){
 			// convert Jet float to hw units
-            in_J_eta_hw[j] = int(etavals[i][j] * (1<<PHI_SIZE)/6);
-            in_J_pt_hw[j]  = Jetvals[i][j].first * (1<<PT_DEC_BITS); // 0.25 GeV precision
-            in_J_phi_hw[j] = int(Jetvals[i][j].second * (1<<PHI_SIZE)/(2*M_PI));
+            in_J_eta_hw[j] = int(etavals[i][j] * (1<<PHI_SIZE)/6); // **** {10bits shifted}
+            in_J_pt_hw[j]  = Jetvals[i][j].first * (1<<PT_DEC_BITS); // 0.25 GeV precision **** {2bits shifted}
+            in_J_phi_hw[j] = int(Jetvals[i][j].second * (1<<PHI_SIZE)/(2*M_PI)); // **** {10bits shifted}
 
 			// Jet test vals
             in_jet_pt[j]  = Jetvals[i][j].first;
@@ -121,7 +122,11 @@ int alg_test() {
         int out_phi_hw_int = float(out_phi_hw);
         float out_phi_hw_rad = float(out_phi_hw) * (2*M_PI)/(1<<PHI_SIZE);
         float out_pt_hw = sqrt(float(out_pt2_hw)) / (1<<PT_DEC_BITS); // 0.25GeV to GeV  // Not use
-		float out_co_hw = sqrt(float(out_corr_hw)) / (1<<PT_DEC_BITS); // Corrected MET // 0.25GeV to GeV
+
+        // **** We have to sqrt the restored out_corr_hw value, not the 4 bits shifted out_corr_hw.
+		// float out_co_hw = sqrt(float(out_corr_hw)) / (1<<(PT_DEC_BITS)); // Corrected MET // 0.25GeV to GeV
+        float out_co_hw = sqrt((float(out_corr_hw)) / (1<<(4))); // Corrected MET // 0.25GeV to GeV 
+
         std::cout << "  HW  : in METpt = " << float(in_pt_hw)/(1<<PT_DEC_BITS) << ", METphi = "<< in_phi_hw*(2*M_PI)/(1<<PHI_SIZE) << ", corrMET = "<< out_co_hw<< "\n";
 
         //if not debugging the full event details, print a compact output (in nice units)

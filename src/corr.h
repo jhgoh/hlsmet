@@ -8,9 +8,11 @@
 #include "hls_math.h"
 
 // For testing
-#define NTEST 2
+#define NTEST 200
+// #define NTEST 1
 #define NPART 128
-#define DEBUG 1
+// #define NPART 4
+#define DEBUG 0
 
 //
 // Input / Output types
@@ -21,19 +23,22 @@
 // TDR: 16 bits, 1/4 GeV. For us, 12 bits probably OK (1024 GeV) but would need to add overflow checks
 #define PT_SIZE 14
 typedef ap_uint<PT_SIZE> pt_t;
-typedef ap_int<PT_SIZE+1> pxy_t;
+// **** We have to find proper bits for pxy_t
+typedef ap_int<PT_SIZE+18> pxy_t;
+// typedef ap_int<64> pxy_t;
 #define PT2_SIZE 2*PT_SIZE
 typedef ap_uint<PT2_SIZE> pt2_t;
 #define PT_DEC_BITS 2
 // bits used to represent the decimal: 2->1/2^2 GeV precision
 
 // phi size = 10bits in TDR. For reference, 2pi/(2^10)=0.0006
+// #define PHI_SIZE 10
 #define PHI_SIZE 10
 typedef ap_int<PHI_SIZE> phi_t;
 
 
 // top algs
-void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_phi[NPART], float in_jet_eta[NPART], float out_corr);
+void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_phi[NPART], float in_jet_eta[NPART], double& out_corr);
 void corr_hw(pt_t data_pt, phi_t data_phi, pt_t jet_pt[NPART], phi_t jet_phi[NPART], phi_t jet_eta[NPART], pt2_t& corr_pt2);
 
 
