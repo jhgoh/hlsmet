@@ -94,8 +94,8 @@ void corr_hw(pt_t data_pt, phi_t data_phi,
 		// **** But var2 had 16bits. So if we try to sum var1*jet_x(which was 18 bits) and var2(which was 16 bits), there comes problem.
 		// **** So I solved the issue by decreasing the number of bits for jet_x bits. 
 		// **** However, I am not sure if this is the optimal approach in terms of precision.
-		sumJ_x += (var1*(jet_x[i] >> 2)+var2); // **** sumJ_x {16bits shifted}
-        sumJ_y += (var1*(jet_y[i] >> 2)+var2); // **** sumJ_y {16bits shifted}
+		sumJ_x += ((var1*(jet_x[i] >> 2)+var2)*(var1*(jet_x[i] >> 2)+var2)); // **** sumJ_x {16bits shifted}
+        sumJ_y += ((var1*(jet_y[i] >> 2)+var2)*(var1*(jet_y[i] >> 2)+var2)); // **** sumJ_y {16bits shifted}
 
         if(DEBUG){
             std::cout << " sigma(Jet) x,y = (" << (sumJ_x >> 16) << ", " << (sumJ_y>>16) << ") \t";
