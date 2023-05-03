@@ -55,8 +55,8 @@ void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_ph
 
 	double K_val = 1.5;
 
-	double corr_x = met_x + (K_val * sumJ_x);
-	double corr_y = met_y + (K_val * sumJ_y);
+	double corr_x = met_x + (K_val * sqrt(sumJ_x));
+	double corr_y = met_y + (K_val * sqrt(sumJ_y));
 
 	if(DEBUG) std::cout << "corr_x, y = " << corr_x << ", " << corr_y <<"\n";
 

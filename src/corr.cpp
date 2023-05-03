@@ -89,6 +89,8 @@ void corr_hw(pt_t data_pt, phi_t data_phi,
 			if(DEBUG) std::cout << "\tCase 3\t";
 		}
 
+		// Uncertainty sigma(MHT, x)^2 = Sum(JetSigma(px)^2)
+
 		// **** Here's the problem point. var1 & var2 was shifted 16 bits.
 		// **** The jet_x & jet_y was shifted 2 bits from TB, so var1 * jet_x(or y) had 18 bits(16bits from var1 & 2 bits from jet_x).
 		// **** But var2 had 16bits. So if we try to sum var1*jet_x(which was 18 bits) and var2(which was 16 bits), there comes problem.
@@ -115,8 +117,8 @@ void corr_hw(pt_t data_pt, phi_t data_phi,
 	// **** This is the same problem with sumJ.
 	// **** Because K_value was shifted 2 bits and sumJ was shifted 16bits, so K_value * (sumJ >> PT_SIZE) had 4 bits shifted.
 	// **** But met value was shifted 2 bits from TB, so I solved them with same way.
-    corr_x = met_x + (K_value * (sumJ_x >> (PT_SIZE + PT_DEC_BITS))); // **** corr_x {2 bits shifted}
-	corr_y = met_y + (K_value * (sumJ_y >> (PT_SIZE + PT_DEC_BITS))); // **** corr_y {2 bits shifted}
+    corr_x = met_x + ( K_value * ( hls::sqrt(sumJ_x) >> (PT_SIZE + PT_DEC_BITS) ) ); // **** corr_x {2 bits shifted}
+	corr_y = met_y + ( K_value * ( hls::sqrt(sumJ_y) >> (PT_SIZE + PT_DEC_BITS) ) ); // **** corr_y {2 bits shifted}
 
 	// **** Because corr value was shifted 2 bits, corr^2 was shifted 4 bits .
 	corr_pt2 = corr_x*corr_x + corr_y*corr_y;  // **** corr_pt2 {4 bits shifted}
