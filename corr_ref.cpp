@@ -32,7 +32,6 @@ void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_ph
 	
 	for(int i=0; i<NPART;i++){
 		if(DEBUG) std::cout << "\tr eta "<< in_jet_eta[i];
-		if (in_jet_eta[i] < 0) std::cout << "Minus\t" << in_jet_eta[i] << "\n";
 		if ( abs(in_jet_eta[i]) < 1.3 ){
 			sumJ_x += pow(0.106*jet_x[i]+6.6,2);
 			sumJ_y += pow(0.106*jet_y[i]+6.6,2);

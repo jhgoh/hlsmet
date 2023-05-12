@@ -23,23 +23,26 @@
 // TDR: 16 bits, 1/4 GeV. For us, 12 bits probably OK (1024 GeV) but would need to add overflow checks
 #define PT_SIZE 14
 typedef ap_uint<PT_SIZE> pt_t;
+//typedef ap_ufixed<PT_SIZE, 12, AP_TRN, AP_SAT> pt_t;
 // **** We have to find proper bits for pxy_t
-typedef ap_int<PT_SIZE+18> pxy_t;
-// typedef ap_int<64> pxy_t;
+typedef ap_int<PT_SIZE+2> pxy_t;
+//typedef ap_fixed<16, 14, AP_TRN, AP_SAT> pxy_t;
+//typedef ap_int<64> pxy_t;
 #define PT2_SIZE 2*PT_SIZE
 typedef ap_uint<PT2_SIZE> pt2_t;
+//typedef ap_ufixed<PT2_SIZE, 24, AP_TRN, AP_SAT> pt2_t;
 #define PT_DEC_BITS 2
 // bits used to represent the decimal: 2->1/2^2 GeV precision
 
 // phi size = 10bits in TDR. For reference, 2pi/(2^10)=0.0006
-// #define PHI_SIZE 10
 #define PHI_SIZE 10
 typedef ap_int<PHI_SIZE> phi_t;
+typedef ap_int<PHI_SIZE> eta_t;
 
 
 // top algs
 void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_phi[NPART], float in_jet_eta[NPART], double& out_corr);
-void corr_hw(pt_t data_pt, phi_t data_phi, pt_t jet_pt[NPART], phi_t jet_phi[NPART], phi_t jet_eta[NPART], pt2_t& corr_pt2);
+void corr_hw(pt_t data_pt, phi_t data_phi, pt_t jet_pt[NPART], phi_t jet_phi[NPART], phi_t jet_eta[NPART], ap_uint<PT2_SIZE*2>& corr_pt2);
 
 
 //
@@ -85,7 +88,7 @@ template<class pt_T, class phi_T,class pxy_T>
 
     // get x component and flip sign if necessary
     x = (pt * cos_table[phiQ1]) >> PT_SIZE;
-    if(debug) std::cout << pt << "  cos_table[" << phiQ1 << "] = " << cos_table[phiQ1] << "  " << x << std::endl;
+    //if(debug) std::cout << pt << "  cos_table[" << phiQ1 << "] = " << cos_table[phiQ1] << "  " << x << std::endl;
     if( phi>=(1<<(PHI_SIZE-2))
         || phi<-(1<<(PHI_SIZE-2)))
         x = -x;
@@ -129,7 +132,7 @@ template<class pt_T, class phi_T,class pxy_T>
 
     // get y component and flip sign if necessary
     y = (pt * sin_table[phiQ1]) >> PT_SIZE;
-    if(debug) std::cout << pt << "  sin_table[" << phiQ1 << "] = " << sin_table[phiQ1] << "  " << y << std::endl;
+    //if(debug) std::cout << pt << "  sin_table[" << phiQ1 << "] = " << sin_table[phiQ1] << "  " << y << std::endl;
     if( phi<0 ) y = -y;
 
     return;

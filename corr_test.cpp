@@ -19,7 +19,7 @@ int alg_test() {
     phi_t in_phi_hw, out_phi_hw;
 
     pt2_t out_pt2_hw;
-	pt2_t out_corr_hw;
+	ap_uint<PT2_SIZE*2> out_corr_hw;
     
 	float in_pt, in_phi, in_jet_eta[NPART], in_jet_pt[NPART], in_jet_phi[NPART];
     float out_pt, out_phi; 
@@ -42,7 +42,7 @@ int alg_test() {
 	// random jet phi
 	std::uniform_real_distribution<float> jet_phi_dist(-M_PI,M_PI);
     // random ejt eta
-    std::uniform_real_distribution<float> jet_eta_dist(-3.,3.);
+    std::uniform_real_distribution<float> jet_eta_dist(-4.,4.);
 
     // fill random test data
     std::vector<std::vector<std::pair<float,float> > > vals; 
@@ -89,7 +89,7 @@ int alg_test() {
 
 		for(int j=0; j<NPART; j++){
 			// convert Jet float to hw units
-            in_J_eta_hw[j] = int(etavals[i][j] * (1<<PHI_SIZE)/6); // **** {10bits shifted}
+            in_J_eta_hw[j] = int(etavals[i][j] * (1<<(PHI_SIZE-1))/4); // **** {10bits shifted}
             in_J_pt_hw[j]  = Jetvals[i][j].first * (1<<PT_DEC_BITS); // 0.25 GeV precision **** {2bits shifted}
             in_J_phi_hw[j] = int(Jetvals[i][j].second * (1<<PHI_SIZE)/(2*M_PI)); // **** {10bits shifted}
 
