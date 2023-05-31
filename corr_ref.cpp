@@ -22,6 +22,7 @@ void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_ph
     for(int i=0;i<NPART;i++){
         jet_x[i] = in_jet_pt[i] * cos(in_jet_phi[i]);
         jet_y[i] = in_jet_pt[i] * sin(in_jet_phi[i]);
+		in_jet_eta[i] = fabs(in_jet_eta[i]);
         if(DEBUG) std::cout << "\tjetx = " << jet_x[i] << " \t ";
         if(DEBUG) std::cout << "\tjety = " << jet_y[i] << " \n";
     }
@@ -30,26 +31,54 @@ void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_ph
 	double sumJ_x=0.;
 	double sumJ_y=0.;
 	
+	int eta_case[4] = {0, 0, 0, 0};
+	
 	for(int i=0; i<NPART;i++){
 		if(DEBUG) std::cout << "\tr eta "<< in_jet_eta[i];
-		if ( abs(in_jet_eta[i]) < 1.3 ){
-			sumJ_x += pow(0.106*jet_x[i]+6.6,2);
-			sumJ_y += pow(0.106*jet_y[i]+6.6,2);
-			if(DEBUG) std::cout << "\tCase 1\t";
+		if ( in_jet_eta[i] < 1.3 && in_jet_eta[i] > 0 ){
+			sumJ_x += pow(0.106*jet_x[i]+6.6, 2);
+			sumJ_y += pow(0.106*jet_y[i]+6.6, 2);
+			if(DEBUG){
+				eta_case[1] += 1;
+				std::cout << "\tCase 1\t";
+			}
 		}
-		if ( abs(in_jet_eta[i]) > 1.3 && abs(in_jet_eta[i]) < 1.7 ){
-			sumJ_x += pow(0.216*jet_x[i]+5.5,2);
-			sumJ_y += pow(0.216*jet_y[i]+5.5,2);
-			if(DEBUG) std::cout << "\tCase 2\t";
+		if ( (in_jet_eta[i] > 1.3 && in_jet_eta[i] < 1.7) 
+//				|| (in_jet_eta[i] < -1.3 && in_jet_eta[i] > -1.7) 
+				){
+			sumJ_x += pow(0.216*jet_x[i]+5.5, 2);
+			sumJ_y += pow(0.216*jet_y[i]+5.5, 2);
+			if(DEBUG){
+				eta_case[2] += 1;
+				std::cout << "\tCase 2\t";
+			}
 		}
-		if ( abs(in_jet_eta[i]) > 2.5 && abs(in_jet_eta[i]) < 3. ){
-			sumJ_x += pow(0.083*jet_x[i]+13.2,2);
-			sumJ_y += pow(0.083*jet_y[i]+13.2,2);
-			if(DEBUG) std::cout << "\tCase 3\t";
+		if ( (in_jet_eta[i] > 2.5 && in_jet_eta[i] < 3.) 
+//				|| (in_jet_eta[i] < -2.5 && in_jet_eta[i] > -3.) 
+				){
+			sumJ_x += pow(0.083*jet_x[i]+13.2, 2);
+			sumJ_y += pow(0.083*jet_y[i]+13.2, 2);
+			if(DEBUG){
+				eta_case[3] += 1;
+				std::cout << "\tCase 3\t";
+			}
+		}
+		if ( in_jet_eta[i] > 3. || (in_jet_eta[i] > 1.7 && in_jet_eta[i] < 2.5) ) {
+			if(DEBUG){
+				eta_case[0] += 1;
+				std::cout << "\tCase 0\t";
+			}
 		}
 		if(DEBUG) std::cout << " sigma(Jet) x,y = (" << sumJ_x << ", " << sumJ_y << ") \t";
 		if(DEBUG) std::cout <<"\n";
 	}
+
+	// if(DEBUG){
+	// 	std::cout << "Case 0: " << eta_case[0] << "\n";
+	// 	std::cout << "Case 1: " << eta_case[1] << "\n";
+	// 	std::cout << "Case 2: " << eta_case[2] << "\n";
+	// 	std::cout << "Case 3: " << eta_case[3] << "\n";
+	// }
 
 
 	double K_val = 1.5;

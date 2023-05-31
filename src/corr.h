@@ -8,9 +8,9 @@
 #include "hls_math.h"
 
 // For testing
-#define NTEST 200
-// #define NTEST 1
-#define NPART 128
+// #define NTEST 2
+#define NTEST 1000
+#define NPART 10
 // #define NPART 4
 #define DEBUG 0
 
@@ -21,28 +21,30 @@
 //    px, py need to be signed
 //    pT^2 needs double precision as pT
 // TDR: 16 bits, 1/4 GeV. For us, 12 bits probably OK (1024 GeV) but would need to add overflow checks
-#define PT_SIZE 14
-typedef ap_uint<PT_SIZE> pt_t;
-//typedef ap_ufixed<PT_SIZE, 12, AP_TRN, AP_SAT> pt_t;
+#define PT_SIZE 20
+#define FLOAT_SIZE 6
+// typedef ap_uint<PT_SIZE> pt_t;
+typedef ap_ufixed<PT_SIZE, PT_SIZE - FLOAT_SIZE, AP_TRN, AP_SAT> pt_t;
 // **** We have to find proper bits for pxy_t
-typedef ap_int<PT_SIZE+2> pxy_t;
-//typedef ap_fixed<16, 14, AP_TRN, AP_SAT> pxy_t;
-//typedef ap_int<64> pxy_t;
+// typedef ap_int<PT_SIZE+2> pxy_t;
+typedef ap_fixed<PT_SIZE + 2, PT_SIZE + 2 - FLOAT_SIZE, AP_TRN, AP_SAT> pxy_t;
+// typedef ap_int<64> pxy_t;
 #define PT2_SIZE 2*PT_SIZE
-typedef ap_uint<PT2_SIZE> pt2_t;
-//typedef ap_ufixed<PT2_SIZE, 24, AP_TRN, AP_SAT> pt2_t;
+// typedef ap_uint<PT2_SIZE> pt2_t;
+typedef ap_ufixed<PT2_SIZE , PT2_SIZE - 2 * FLOAT_SIZE, AP_TRN, AP_SAT> pt2_t;
 #define PT_DEC_BITS 2
 // bits used to represent the decimal: 2->1/2^2 GeV precision
 
 // phi size = 10bits in TDR. For reference, 2pi/(2^10)=0.0006
+// #define PHI_SIZE 10
 #define PHI_SIZE 10
-typedef ap_int<PHI_SIZE> phi_t;
-typedef ap_int<PHI_SIZE> eta_t;
+// typedef ap_int<PHI_SIZE> phi_t;
+typedef ap_fixed<PHI_SIZE, PHI_SIZE - FLOAT_SIZE, AP_TRN, AP_SAT> phi_t;
 
 
 // top algs
 void corr_ref(float in_pt, float in_phi, float in_jet_pt[NPART], float in_jet_phi[NPART], float in_jet_eta[NPART], double& out_corr);
-void corr_hw(pt_t data_pt, phi_t data_phi, pt_t jet_pt[NPART], phi_t jet_phi[NPART], phi_t jet_eta[NPART], ap_uint<PT2_SIZE*2>& corr_pt2);
+void corr_hw(pt_t data_pt, phi_t data_phi, pt_t jet_pt[NPART], phi_t jet_phi[NPART], phi_t jet_eta[NPART], pt2_t& corr_pt2);
 
 
 //
@@ -59,9 +61,10 @@ void init_projx_table(pt_T table_out[PROJ_TAB_SIZE]) {
     // multiply result by 2^(PT_SIZE) (equal to 1 in our units)
     for (int i = 0; i < PROJ_TAB_SIZE; i++) {
         //store result, guarding overflow near costheta=1
-        pt2_t x = round((1<<PT_SIZE) * cos(float(i)/PROJ_TAB_SIZE * M_PI/2));
+        // pt2_t x = cos(M_PI * i * 0.5 / PROJ_TAB_SIZE);
+        pt2_t x = cos((i * M_PI) / (PROJ_TAB_SIZE * 2));
         // (using extra precision here (pt2_t, not pt_t) to check the out of bounds condition)
-        if(x >= (1<<PT_SIZE)) table_out[i] = (1<<PT_SIZE)-1;
+        if(x >= 1) table_out[i] = (1<<PT_SIZE)-1;
         else table_out[i] = x;
     }
     return;
@@ -82,16 +85,14 @@ template<class pt_T, class phi_T,class pxy_T>
         initialized = true;
     }
     //map phi to first quadrant value: range [0, 2^(PHI_SIZE-2))
-    ap_uint<PHI_SIZE-2> phiQ1 = phi;
-    if(phi>=(1<<(PHI_SIZE-2))) phiQ1 = (1<<(PHI_SIZE-2)) -1 - phiQ1; // map 64-128 (0-63) to 63-0
-    if(phi<0 && phi>=-(1<<(PHI_SIZE-2))) phiQ1 = (1<<(PHI_SIZE-2)) -1 - phiQ1; // map -64-1 (0-63) to 63-0
+    if(phi<0) phi = -phi;
+    ap_uint<PHI_SIZE-2> phiQ1 = float(phi) * PROJ_TAB_SIZE / (M_PI / 2);
+    if(phi>=(M_PI/2)) phiQ1 = (1<<(PHI_SIZE-1)) -1 - phiQ1; // map 64-128 (0-63) to 63-0
 
     // get x component and flip sign if necessary
-    x = (pt * cos_table[phiQ1]) >> PT_SIZE;
-    //if(debug) std::cout << pt << "  cos_table[" << phiQ1 << "] = " << cos_table[phiQ1] << "  " << x << std::endl;
-    if( phi>=(1<<(PHI_SIZE-2))
-        || phi<-(1<<(PHI_SIZE-2)))
-        x = -x;
+    x = (pt * cos_table[phiQ1]);
+    if(phi>=(M_PI / 2)) x = -x;
+    // if(debug) std::cout << pt << "\t" << phi << "\t" << phiQ1 << "\tcos_table[" << phiQ1 << "] = " << (cos_table[phiQ1]) << "\t" << x << std::endl;
 
     return;
 }
@@ -100,19 +101,21 @@ template<class pt_T, class phi_T,class pxy_T>
 
 template<class pt_T>
 void init_projy_table(pt_T table_out[PROJ_TAB_SIZE]) {
-    // Return table of sin(phi) where phi is in (0,pi/2)
-    // multiply result by 1=2^(PT-SIZE)
-    // see comments in the above ProjX function
+    // Return table of cos(phi) where phi is in (0,pi/2)
+    // multiply result by 2^(PT_SIZE) (equal to 1 in our units)
     for (int i = 0; i < PROJ_TAB_SIZE; i++) {
-        pt2_t x = round((1<<PT_SIZE) * sin(float(i)/PROJ_TAB_SIZE * M_PI/2));
-        if(x >= (1<<PT_SIZE)) table_out[i] = (1<<PT_SIZE)-1;
+        //store result, guarding overflow near costheta=1
+        // pt2_t x = cos(M_PI * i * 0.5 / PROJ_TAB_SIZE);
+        pt2_t x = sin((i * M_PI) / (PROJ_TAB_SIZE * 2));
+        // (using extra precision here (pt2_t, not pt_t) to check the out of bounds condition)
+        if(x >= 1) table_out[i] = (1<<PT_SIZE)-1;
         else table_out[i] = x;
     }
     return;
 }
 
 template<class pt_T, class phi_T,class pxy_T>
-    void ProjY(pt_T pt, phi_T phi, pxy_T &y, bool debug=false){
+    void ProjY(pt_T pt, phi_T phi, pxy_T &x, bool debug=false){
     // Initialize the lookup tables
 #ifdef __HLS_SYN__
     bool initialized = false;
@@ -125,18 +128,27 @@ template<class pt_T, class phi_T,class pxy_T>
         init_projy_table(sin_table);
         initialized = true;
     }
-    //map phi to first quadrant value: range [0, 2^(PHI_SIZE-2))
-    ap_uint<PHI_SIZE-2> phiQ1 = phi;
-    if(phi>=(1<<(PHI_SIZE-2))) phiQ1 = (1<<(PHI_SIZE-2)) -1 - phiQ1; // map 64-128 (0-63) to 63-0
-    if(phi<0 && phi>=-(1<<(PHI_SIZE-2))) phiQ1 = (1<<(PHI_SIZE-2)) -1 - phiQ1; // map -64-1 (0-63) to 63-0
+    if(phi<0) {
+        phi = -phi;
+        ap_uint<PHI_SIZE-2> phiQ1 = float(phi) * PROJ_TAB_SIZE / (M_PI / 2);
+        if(phi>=(M_PI/2)) phiQ1 = (1<<(PHI_SIZE-1)) -1 - phiQ1; // map 64-128 (0-63) to 63-0
+        x = - (pt * sin_table[phiQ1]);
+        // if(debug) std::cout << pt << "\t" << phi << "\t" << phiQ1 << "\tsin_table[" << phiQ1 << "] = " << (sin_table[phiQ1]) << "\t" << x << std::endl;
+    }
+    else {
+        ap_uint<PHI_SIZE-2> phiQ1 = float(phi) * PROJ_TAB_SIZE / (M_PI / 2);
+        if(phi>=(M_PI/2)) phiQ1 = (1<<(PHI_SIZE-1)) -1 - phiQ1; // map 64-128 (0-63) to 63-0
 
-    // get y component and flip sign if necessary
-    y = (pt * sin_table[phiQ1]) >> PT_SIZE;
-    //if(debug) std::cout << pt << "  sin_table[" << phiQ1 << "] = " << sin_table[phiQ1] << "  " << y << std::endl;
-    if( phi<0 ) y = -y;
+        // get x component and flip sign if necessary
+        x = (pt * sin_table[phiQ1]);
+        // if(debug) std::cout << pt << "\t" << phi << "\t" << phiQ1 << "\tsin_table[" << phiQ1 << "] = " << (sin_table[phiQ1]) << "\t" << x << std::endl;
+    };
+    
+    
 
     return;
 }
+
 
 
 
