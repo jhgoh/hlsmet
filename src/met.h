@@ -3,37 +3,42 @@
 
 #include <iostream>
 #include <cmath>
-#include "ap_int.h"
-#include "ap_fixed.h"
-
-// For testing
-#define NTEST 1000
-#define NPART 128
-#define DEBUG 0
-
-//
-// Input / Output types
-//
-
-//  pT is uint where 1 bit = 1/4 GeV, up to 4096 (16 bits)
-//    px, py need to be signed
-//    pT^2 needs double precision as pT
-// TDR: 16 bits, 1/4 GeV. For us, 12 bits probably OK (1024 GeV) but would need to add overflow checks
-#define PT_SIZE 14
-typedef ap_uint<PT_SIZE> pt_t;
-typedef ap_int<PT_SIZE+1> pxy_t;
-#define PT2_SIZE 2*PT_SIZE
-typedef ap_uint<PT2_SIZE> pt2_t;
-#define PT_DEC_BITS 2
-// bits used to represent the decimal: 2->1/2^2 GeV precision
-
-// phi size = 10bits in TDR. For reference, 2pi/(2^10)=0.0006
-#define PHI_SIZE 10
-typedef ap_int<PHI_SIZE> phi_t;
 
 // top algs
 void met_ref(float in_pt[NPART], float in_phi[NPART], float& out_pt, float& out_phi);
 void met_hw(pt_t data_pt[NPART], phi_t data_phi[NPART], pt2_t& res_pt2, phi_t& res_phi);
+
+/*
+#define PROJ_TAB_SIZE (1<<(PHI_SIZE-2))
+template<class pt_T, class phi_T,class pxy_T>
+void ProjXY(pt_T pt, phi_T phi, pxy_T& px, pxy_T& py, bool debug=false)
+{
+  // Initialize the lookup tables
+#ifdef __HLS_SYN__
+  bool initialized = false;
+  pt_t cos_table[PROJ_TAB_SIZE];
+#else 
+  static bool initialized = false;
+  static pt_t cos_table[PROJ_TAB_SIZE];
+#endif
+  if (!initialized) {
+    init_projx_table(cos_table);
+    initialized = true;
+  }
+    //map phi to first quadrant value: range [0, 2^(PHI_SIZE-2))
+    ap_uint<PHI_SIZE-2> phiQ1 = phi;
+    if(phi>=(1<<(PHI_SIZE-2))) phiQ1 = (1<<(PHI_SIZE-2)) -1 - phiQ1; // map 64-128 (0-63) to 63-0
+    if(phi<0 && phi>=-(1<<(PHI_SIZE-2))) phiQ1 = (1<<(PHI_SIZE-2)) -1 - phiQ1; // map -64-1 (0-63) to 63-0
+
+    // get x component and flip sign if necessary
+    x = (pt * cos_table[phiQ1]) >> PT_SIZE;
+    if(debug) std::cout << pt << "  cos_table[" << phiQ1 << "] = " << cos_table[phiQ1] << "  " << x << std::endl;
+    if( phi>=(1<<(PHI_SIZE-2))
+        || phi<-(1<<(PHI_SIZE-2)))
+        x = -x;
+
+    return;
+}
 
 
 //
@@ -218,23 +223,11 @@ template<class pxy_T, class phi_T>
     return;
 }
 
-
-
 // General comments:
 // division = multiplication and bit shift
 // if a, b uint<16>, then a in (0,2^16-1) and 1==2^16
 // then 1/b=2^16/b and a/b=a*(2^16/b)
 // can convert to decimal by shifting 16 bits
 // a/b = a*(2^16/b) >> 16
-
-
-
-
-
-
-
-
-
-
-
+*/
 #endif

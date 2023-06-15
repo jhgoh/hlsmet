@@ -1,7 +1,9 @@
 /*
 HLS implementation of MET calculation from PF objects
 */
+#include "common.h"
 #include "met.h"
+
 #include <cmath>
 #include <cassert>
 #ifndef __SYNTHESIS__
@@ -9,53 +11,42 @@ HLS implementation of MET calculation from PF objects
 #endif
 
 // pt, phi are integers
-void met_hw(pt_t data_pt[NPART], phi_t data_phi[NPART], pt2_t& res_pt2, phi_t& res_phi){
-    #pragma HLS ARRAY_PARTITION variable=data_pt complete
-    #pragma HLS ARRAY_PARTITION variable=data_phi complete
+void met_hw(pt_t in_pt[NPART], phi_t in_phi[NPART], pt2_t& out_pt2, phi_t& out_phi)
+{
+#pragma HLS ARRAY_PARTITION variable=in_pt complete
+#pragma HLS ARRAY_PARTITION variable=in_phi complete
 
-    #pragma HLS pipeline ii=54
-    
-    if(DEBUG) std::cout << "  HW Begin" << std::endl;
+#pragma HLS pipeline ii=54
+      
+#if(DEBUG==1)
+  std::cout << "  HW Begin" << std::endl;
+#endif
 
-    pt_t data_pt_int[NPART];
-    phi_t data_phi_int[NPART];
-    #pragma HLS ARRAY_PARTITION variable=data_pt_int complete
-    #pragma HLS ARRAY_PARTITION variable=data_phi_int complete
-
-    FILL_INTERNAL: for(int i=0; i<NPART;i++){
+  pxy_t met_x = 0;
+  pxy_t met_y = 0;
+  LOOP_PROJECT: for(int i=0; i<NPART; ++i) {
+#ifdef INTONLY
+    met_x -= in_pt[i] * f2hwPhi(cos(hw2fPhi(in_phi[i])));
+    met_y -= in_pt[i] * f2hwPhi(sin(hw2fPhi(in_phi[i])));
+#if(DEBUG==1)
+std::cout << "DEBUG(HW/INT) " << i << ' ' << hw2fPt(in_pt[i]) << ' ' << hw2fPhi(in_phi[i]) << std::endl;
+#endif
+#else
 #pragma HLS UNROLL
-        data_pt_int[i]=data_pt[i];
-        data_phi_int[i]=data_phi[i];
-    }
+    met_x -= in_pt[i] * hls::cos(in_phi[i]);
+    met_y -= in_pt[i] * hls::sin(in_phi[i]);
+#if(DEBUG==1)
+std::cout << "DEBUG(HW/HLS): " << i << ' ' << in_pt[i] << ' ' << in_phi[i] << ' ' << hls::cos(in_phi[i]) << ' ' << hls::sin(in_phi[i]) << std::endl;
+#endif
+#endif
+  }
 
-    // calc signed components first
-    pxy_t met_x[NPART];
-    pxy_t met_y[NPART];
-    LOOP_PROJECT: for(int i=0; i<NPART;i++){
-#pragma HLS UNROLL
-        // Get x, y components
-        ProjX(data_pt_int[i], data_phi_int[i], met_x[i]);
-        ProjY(data_pt_int[i], data_phi_int[i], met_y[i]);
-    }
+  out_pt2 = met_x*met_x + met_y*met_y;
+  out_phi = hls::atan2(met_y, met_x);
+#if(DEBUG==1)
+  std::cout << "DEBUG(HW) MET pT2=" << out_pt2 << " Phi=" << out_phi << " px=" << met_x << " py=" << met_y << std::endl;
+#endif
 
-    pxy_t sum_x = 0;
-    pxy_t sum_y = 0;
-    SUM: for(int i=0; i<NPART;i++){
-#pragma HLS UNROLL
-        // Add to x, y sums
-        sum_x -= met_x[i];
-        sum_y -= met_y[i];
-         if(DEBUG){
-             std::cout << "     met x,y = (" << -met_x[i] << ", " << -met_y[i] << ") \t";
-             std::cout << " sum x,y = (" << sum_x << ", " << sum_y << ") \t";
-             std::cout << " \n";
-         }
-    }
-
-    res_pt2 = sum_x*sum_x + sum_y*sum_y;
-    //PhiFromXY(sum_x,sum_y,res_phi);
-    res_phi=0;
-
-    return;
+  return;
 }
 
