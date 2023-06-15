@@ -1,2 +1,4 @@
 vivado_hls.log
+vitis_hls.log
+*.csv
 proj*/

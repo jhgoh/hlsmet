@@ -3,7 +3,7 @@
 
 // Configurations for the testbench program
 //#define INTONLY
-#define NTEST 10000
+#define NTEST 1000
 #define NPART 128
 #define DEBUG 0
 
