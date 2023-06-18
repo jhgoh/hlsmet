@@ -22,9 +22,20 @@ void met_hw(pt_t in_pt[NPART], phi_t in_phi[NPART], pt2_t& out_pt2, phi_t& out_p
   std::cout << "  HW Begin" << std::endl;
 #endif
 
+  float metref_x = 0, metref_y = 0;
   pxy_t met_x = 0;
   pxy_t met_y = 0;
-  LOOP_PROJECT: for(int i=0; i<NPART; ++i) {
+  LOOP_PROJECT:
+  for(int i=0; i<NPART; ++i) {
+    std::cout << "vvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv\n";
+    std::cout << "       x:" << metref_x << ' ' << met_x << std::endl;
+    std::cout << "       y:" << metref_y << ' ' << met_y << std::endl;
+    std::cout << "................................\n";
+    std::cout << "HW        pt=" << in_pt[i] << " phi=" << in_phi[i] << std::endl;
+    std::cout << "float(HW) pt=" << float(in_pt[i]) << " phi=" << float(in_phi[i]) << std::endl;
+    std::cout << "float(HW) px=" << float(in_pt[i])*std::cos(float(in_phi[i])) << " py=" << float(in_pt[i])*std::sin(float(in_phi[i])) << std::endl;
+    metref_x -= float(in_pt[i])*std::cos(float(in_phi[i]));
+    metref_y -= float(in_pt[i])*std::sin(float(in_phi[i]));
 #ifdef INTONLY
     met_x -= in_pt[i] * f2hwPhi(cos(hw2fPhi(in_phi[i])));
     met_y -= in_pt[i] * f2hwPhi(sin(hw2fPhi(in_phi[i])));
@@ -39,6 +50,10 @@ std::cout << "DEBUG(HW/INT) " << i << ' ' << hw2fPt(in_pt[i]) << ' ' << hw2fPhi(
 std::cout << "DEBUG(HW/HLS): " << i << ' ' << in_pt[i] << ' ' << in_phi[i] << ' ' << hls::cos(in_phi[i]) << ' ' << hls::sin(in_phi[i]) << std::endl;
 #endif
 #endif
+    std::cout << "------------------------\n";
+    std::cout << "       x:" << metref_x << ' ' << met_x << std::endl;
+    std::cout << "       y:" << metref_y << ' ' << met_y << std::endl;
+    std::cout << "^^^^^^^^^^^^^^^^^^^^^^^^^^^\n";
   }
 
   out_pt2 = met_x*met_x + met_y*met_y;

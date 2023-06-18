@@ -2,8 +2,8 @@
 open_project -reset proj0
 set_top met_hw
 add_files src/met.cpp
-add_files -tb ref/generateEvents.cpp
-add_files -tb ref/met_ref.cpp
+add_files -tb bench/readEvents.cpp
+add_files -tb bench/met_ref.cpp
 add_files -tb test_met.cpp 
 
 # reset the solution
@@ -19,9 +19,9 @@ create_clock -period 2.777778 -name default
 
 # do stuff
 csim_design
-csynth_design
-cosim_design -trace_level all
-export_design -format ip_catalog  -vendor "cern-cms"
+#csynth_design
+#cosim_design -trace_level all
+#export_design -format ip_catalog  -vendor "cern-cms"
 
 # exit Vivado HLS
 exit
