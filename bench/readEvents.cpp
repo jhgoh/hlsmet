@@ -33,6 +33,45 @@ std::vector<eventF_t> generateEvents(const int nEvent, const int nPart)
   return out;
 }
 
+std::vector<eventF_t> readEvents(const std::string fileName, const int nEvent, const int nPart)
+{
+  std::cout << "* ReadEvent from the file \"" << fileName << "\"\n"
+          << "* Note that the input is a dump file converted from root file,\n"
+          << "* but we are converting them to float numbers. For the implementation,\n"
+          << "* see https://github.com/therwig/MET_Response/tree/master/dumpfiles" << std::endl;
+  std::vector<eventF_t> events;
+  events.resize(nEvent);
+
+  FILE* f = fopen(fileName.c_str(), "rb");
+  std::vector<l1tpf_int::PFParticle> pfs;
+  uint64_t ie = 0;
+  int iEvent = 0;
+  while ( fread(&ie, sizeof(uint64_t), 1, f)) {
+    if ( ie > 15 ) break; // FIXME: check this number
+    pfs.clear();
+    readManyFromFile(pfs, f);
+    pfs.resize(nPart); // resize the vector to truncate or fill with empty elements
+
+    eventF_t event;
+    for ( auto& pf : pfs ) {
+      // Have to divided by factors, defined in the "DiscretePFInputs.h",
+      // but also divide by yet another factor used during the conversion step.
+      // I think the code for the conversion is this one: 
+      //    https://github.com/ParticleChef/hlsmet/blob/64words/convertDump.cpp
+      const float pt = float(pf.hwPt)/l1tpf_int::CaloCluster::PT_SCALE;
+      const float phi = float(pf.hwPhi)/l1tpf_int::CaloCluster::ETAPHI_SCALE;
+      const float eta = float(pf.hwEta)/l1tpf_int::CaloCluster::ETAPHI_SCALE;
+
+      event.first.push_back(pt);
+      event.second.push_back(phi);
+    }
+    events[iEvent++] = event;
+  }
+
+  fclose(f);
+  return events;
+}
+
 std::vector<eventF_t> readEventsFromHex(const std::string fileName, const int nEvent, const int nPart)
 {
   std::cout << "* ReadEvent from the file \"" << fileName << "\"\n"
@@ -42,6 +81,7 @@ std::vector<eventF_t> readEventsFromHex(const std::string fileName, const int nE
             << "* is compatible with the original HEX file, there should be no\n"
             << "* loss in the information.\n";
   std::vector<eventF_t> events;
+  events.resize(nEvent);
 
   // Read from the input file and fill up the event;
   std::ifstream fin(fileName);
@@ -51,6 +91,8 @@ std::vector<eventF_t> readEventsFromHex(const std::string fileName, const int nE
   }
   for ( int i=0; i<nEvent; ++i ) {
     eventF_t event;
+    event.first.resize(nPart); // resize the vector to truncate or fill with empty elements
+    event.second.resize(nPart); // resize the vector to truncate or fill with empty elements
 
     std::string line;
     if ( !std::getline(fin, line) ) break;
@@ -77,10 +119,10 @@ std::vector<eventF_t> readEventsFromHex(const std::string fileName, const int nE
       const float phi = float(phi_hw)/l1tpf_int::CaloCluster::ETAPHI_SCALE;
       const float eta = float(eta_hw)/l1tpf_int::CaloCluster::ETAPHI_SCALE;
 
-      event.first.push_back(pt);
-      event.second.push_back(phi);
+      event.first[j] = pt;
+      event.second[j] = phi;
     }
-    events.emplace_back(event);
+    events[i] = event;
   }
 
   return events;
