@@ -51,8 +51,6 @@ int alg_test()
     met_ref(&ptsRef[0], &phisRef[0], met2Ref, metphiRef);
     met_hw(&ptsHW[0], &phisHW[0], met2HW, metphiHW);
 
-    std::cout << "           >>>>> " << met2Ref << ' ' << met2HW << std::endl;
-    break;
     const double metRef = std::sqrt(met2Ref);
     const double metHW = std::sqrt(float(met2HW));
     const double dmet = metRef-metHW;
