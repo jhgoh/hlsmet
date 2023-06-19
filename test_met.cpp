@@ -3,6 +3,7 @@ MET calculation from PF objects
 */
 #include "src/common.h"
 #include "src/met.h"
+#include "src/jercorr.h"
 #include "bench/readEvents.h"
 #include "bench/met_ref.h"
 
@@ -21,10 +22,10 @@ int alg_test()
   //auto eventsRef = readEvents("/users/junwonoh/out_TTbar.dump");
   auto eventsRef = readEventsFromHex("/users/jhgoh/work/FPGA/hlsmet/TTbar_1000evt_54part_v2.dump");
   //auto eventsRef = generateEvents(NTEST, NPART);
-  cout << "Generated " << eventsRef.size() << " events" << endl;
+  cout << "Produced " << eventsRef.size() << " events" << endl;
 
   std::ofstream fout("met.csv");
-  fout << "MET_Ref,MET_HW,HW-REf\n";
+  fout << "MET_Ref,MET_HW,CORRMET_HW\n";
 
   double metMaxRef = 0, metMaxHW = 0;
   double metMinRef = 0, metMinHW = 1e9;
@@ -45,29 +46,31 @@ int alg_test()
     auto ptsHW = eventHW.first;
     auto phisHW = eventHW.second;
 
-    float met2Ref, metphiRef;
-    pt2_t met2HW;
+    float metRef, metphiRef;
+    pt_t metHW;
     phi_t metphiHW;
-    met_ref(&ptsRef[0], &phisRef[0], met2Ref, metphiRef);
-    met_hw(&ptsHW[0], &phisHW[0], met2HW, metphiHW);
+    met_ref(&ptsRef[0], &phisRef[0], metRef, metphiRef);
+    met_hw(&ptsHW[0], &phisHW[0], metHW, metphiHW);
 
-    const double metRef = std::sqrt(met2Ref);
-    const double metHW = std::sqrt(float(met2HW));
-    const double dmet = metRef-metHW;
+    pt_t corrmetHW;
+    // FIXME: we need jet pts, phis and etas and pass them into the following function.
+    jercorrmet_hw(metHW, &ptsHW[0], &phisHW[0], &phisHW[0], corrmetHW);
+
+    const float dmet = metRef-float(metHW);
     metDiff += dmet;
     metDiff2 += dmet*dmet;
-    if ( std::abs(dmet) > std::abs(metMaxRef-metMaxHW) ) {
+    if ( std::abs(dmet) > std::abs(metMaxRef-float(metMaxHW)) ) {
       metMaxRef = metRef;
       metMaxHW = metHW;
     }
-    else if ( std::abs(dmet) < std::abs(metMinRef-metMinHW) ) { 
+    else if ( std::abs(dmet) < std::abs(metMinRef-float(metMinHW)) ) { 
       metMinRef = metRef;
       metMinHW = metHW;
     }
 #if(DEBUG==1)
     cout << "Ref=" << metRef << " metHW=" << metHW << " Difference=" << (metHW-metRef) << endl;
 #endif
-    fout << metRef << "," << metHW << "," << (metHW-metRef) << endl;
+    fout << metRef << "," << metHW << "," << corrmetHW << endl;
   }
   cout << endl;
 
@@ -77,7 +80,7 @@ int alg_test()
        << " Ref=" << metMinRef << " HW=" << metMinHW << " difference=" << (metMinHW-metMinRef) << "\n"
        << "Difference between HW and Reference:\n"
        << " <HW-Ref>=" << (metDiff/eventsRef.size())
-       << " RMS=" << (metDiff2-metDiff*metDiff/eventsRef.size())/eventsRef.size() << endl;
+       << " RMS=" << std::sqrt((metDiff2-metDiff*metDiff/eventsRef.size())/eventsRef.size()) << endl;
 
   return 0;
 }

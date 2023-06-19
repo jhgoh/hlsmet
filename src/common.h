@@ -5,6 +5,7 @@
 //#define INTONLY
 #define NTEST 1000
 #define NPART 128
+#define NJET 10
 #define DEBUG 0
 
 #include "hls_math.h"

@@ -1,12 +1,11 @@
 #ifndef MET_H
 #define MET_H
 
-#include <iostream>
-#include <cmath>
+//#include <iostream>
+//#include <cmath>
 
 // top algs
-void met_ref(float in_pt[NPART], float in_phi[NPART], float& out_pt, float& out_phi);
-void met_hw(pt_t data_pt[NPART], phi_t data_phi[NPART], pt2_t& res_pt2, phi_t& res_phi);
+void met_hw(pt_t data_pt[NPART], phi_t data_phi[NPART], pt_t& met_pt, phi_t& met_phi);
 
 /*
 #define PROJ_TAB_SIZE (1<<(PHI_SIZE-2))
