@@ -53,8 +53,9 @@ int alg_test()
     met_hw(&ptsHW[0], &phisHW[0], metHW, metphiHW);
 
     pt_t corrmetHW;
+    phi_t corrmetphiHW;
     // FIXME: we need jet pts, phis and etas and pass them into the following function.
-    jercorrmet_hw(metHW, &ptsHW[0], &phisHW[0], &phisHW[0], corrmetHW);
+    jercorrmet_hw(metHW, metphiHW, &ptsHW[0], &phisHW[0], &phisHW[0], corrmetHW, corrmetphiHW);
 
     const float dmet = metRef-float(metHW);
     metDiff += dmet;
