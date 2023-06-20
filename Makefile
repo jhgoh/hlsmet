@@ -6,28 +6,28 @@ SRCS += $(wildcard src/*.cpp) $(wildcard src/*.h)
 SRCS += $(wildcard bench/*.cpp) $(wildcard bench.*.h)
 PRJPATH = proj0/solution1
 
-all: design
+all: synth
 
 CSIMEXE := $(PRJPATH)/csim/build/csim.exe
-csim: | $(CSIMEXE)
+$(CSIMEXE): tcl/do_met.tcl tcl/do_corrmet.tcl $(SRCS)
+	@echo $(CSIMEXE) $(wildcard $(CSIMEXE))
+ifeq ($(wildcard $(CSIMEXE)),)
+	@echo "Cannot find $(CSIMEXE). Please build the csim first then continue"
+	@echo "Available targets:"
+	@echo "- mettest"
+	@echo "- corrmettest"
+	exit 1
+endif
 
-$(CSIMEXE): $(SRCS)
+mettest: tcl/do_met.tcl $(SRCS)
 	$(APP) -f tcl/do_met.tcl
 
-SYNTHOUT := $(PRJPATH)/syn
-synth: $(CSIMEXE) | $(SYNTHOUT)
+corrmettest: tcl/do_corrmet.tcl $(SRCS)
+	$(APP) -f tcl/do_corrmet.tcl
 
-$(SYNTHOUT):
-	$(APP) -f tcl/do_csynth.tcl
-
-COSIMOUT := $(PRJPATH)/sim
-cosim: $(SYNTHOUT) | $(COSIMOUT)
-
-$(COSIMOUT):
-	$(APP) -f tcl/do_cosim.tcl
-
-design: $(COSIMOUT)
-	$(APP) -f tcl/do_design.tcl
+synth: tcl/do_synth.tcl | $(CSIMEXE)
+	@echo do_synth
+	$(APP) -f tcl/do_synth.tcl
 
 clean:
 	rm -rf proj*

@@ -3,7 +3,7 @@ MET calculation from PF objects
 */
 #include "src/common.h"
 #include "src/met.h"
-#include "src/jercorr.h"
+#include "src/corrmet.h"
 #include "bench/readEvents.h"
 #include "bench/met_ref.h"
 
@@ -55,7 +55,7 @@ int alg_test()
     pt_t corrmetHW;
     phi_t corrmetphiHW;
     // FIXME: we need jet pts, phis and etas and pass them into the following function.
-    jercorrmet_hw(metHW, metphiHW, &ptsHW[0], &phisHW[0], &phisHW[0], corrmetHW, corrmetphiHW);
+    corrmet_hw(metHW, metphiHW, &ptsHW[0], &phisHW[0], &phisHW[0], corrmetHW, corrmetphiHW);
 
     const float dmet = metRef-float(metHW);
     metDiff += dmet;

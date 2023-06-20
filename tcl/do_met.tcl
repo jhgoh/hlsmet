@@ -2,10 +2,10 @@
 open_project -reset proj0
 set_top met_hw
 add_files src/met.cpp
-add_files src/jercorr.cpp
+add_files src/corrmet.cpp
 add_files -tb bench/readEvents.cpp
 add_files -tb bench/met_ref.cpp
-add_files -tb test_met.cpp 
+add_files -tb test_met.cpp
 
 # reset the solution
 open_solution -reset "solution1"

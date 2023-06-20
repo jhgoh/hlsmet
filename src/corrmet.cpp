@@ -2,7 +2,7 @@
 HLS implementation of MET correction with Jet energy resolution
 */
 #include "common.h"
-#include "jercorr.h"
+#include "corrmet.h"
 
 #include <cmath>
 #include <cassert>
@@ -11,7 +11,7 @@ HLS implementation of MET correction with Jet energy resolution
 #endif
 
 // pt, phi are integers
-void jercorrmet_hw(pt_t in_met, phi_t in_metphi,
+void corrmet_hw(pt_t in_met, phi_t in_metphi,
                    pt_t in_pt[NJET], phi_t in_phi[NJET], phi_t in_eta[NJET],
                    pt_t& out_corrmet, phi_t& out_corrmetphi)
 {
